@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/ifont21/pre-releaser-cli/internal/files"
+	"github.com/ifont21/pre-releaser-cli/internal/gpt"
 )
 
 type PkgJSONRepositoryImpl struct{}
@@ -55,4 +57,32 @@ func (p *PkgJSONRepositoryImpl) BumpNPMPackage(filePath string, bumpType string)
 	}
 
 	return version, nil
+}
+
+func (p *PkgJSONRepositoryImpl) GetPackageBumpTypeOutOfCommits(commits string, lib string) (string, error) {
+
+	request := `based on the commit message how you suggest to bump the library
+		- major\n
+		- minor\n
+		- patch
+	`
+	prompt := fmt.Sprintf("%s\n%s", request, commits)
+
+	gptHandler := gpt.NewGPTHandler(os.Getenv("OPENAI_TOKEN"))
+	text, err := gptHandler.GetAnswerFromChat(prompt)
+	if err != nil {
+		return "", err
+	}
+	bumpType := "patch"
+
+	if strings.Contains(text, "major") {
+		bumpType = "major"
+	}
+
+	if strings.Contains(text, "minor") {
+		bumpType = "minor"
+	}
+	fmt.Println("Bump Type suggested -->: ", bumpType)
+
+	return bumpType, nil
 }

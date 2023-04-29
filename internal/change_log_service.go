@@ -18,3 +18,12 @@ func (n *ChangeLogPackageService) UpdateChangelog(filePath string, latestChangel
 
 	return nil
 }
+
+func (n *ChangeLogPackageService) GenerateChangelog(commitMessage string, version string) (string, error) {
+	changeLogText, err := n.changeLogRepository.GetChangelogOutOfCommitMessageAndVersion(commitMessage, version)
+	if err != nil {
+		return "", err
+	}
+
+	return changeLogText, nil
+}

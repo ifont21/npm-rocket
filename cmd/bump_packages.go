@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var basePath string
+var repoPath string
 var libs string
 var commits string
 
@@ -27,19 +27,35 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		npmService := internal.NewNPMPackageService(internal.NewPkgJSONRepositoryImpl(), internal.NewChangeLogRepositoryImpl())
+		npmService := internal.NewNPMPackageService(
+			internal.NewPkgJSONRepositoryImpl(),
+			internal.NewChangeLogRepositoryImpl(),
+			internal.NewGitRepositoryImpl(),
+		)
 		libArray := strings.Split(libs, ",")
-		err := npmService.BumpNPMPackagesAndChangelog(basePath, libArray, commits)
+
+		// get the current directory if repoPath is empty
+		if repoPath == "" {
+			repoPath = "."
+		}
+
+		err := npmService.BumpNPMPackagesAndChangelog(repoPath, libArray, commits)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		/* err := npmService.CreatePR(repoPath)
+		if err != nil {
+			log.Fatal(err)
+		} */
+
 	},
 }
 
 func init() {
-	bumpPackagesCmd.Flags().StringVarP(&basePath, "basePath", "b", "", "base path to the libraries")
-	bumpPackagesCmd.Flags().StringVarP(&libs, "libs", "l", "", "libs to bump separated by comma")
-	bumpPackagesCmd.Flags().StringVarP(&commits, "commits", "c", "", "commits to update the CHANGELOG.md file")
+	bumpPackagesCmd.Flags().StringVarP(&repoPath, "repoPath", "r", "", "base path to the libraries")
+	bumpPackagesCmd.Flags().StringVarP(&libs, "libs", "l", "None", "libs to bump separated by comma")
+	bumpPackagesCmd.Flags().StringVarP(&commits, "commits", "c", "None", "commits to update the CHANGELOG.md file")
 
 	rootCmd.AddCommand(bumpPackagesCmd)
 
