@@ -1,0 +1,16 @@
+feat(util-a-lib): add aria-label (6a3ebaa), closes #4133
+fix(feature-a-lib): add offset to match Bootstrap (47fc2fe)
+fix(feature-a-lib): do not scroll when opening with container='body'
+fix(feature-a-lib): ensure popup is shown above modal (#4282) (029ac2a), closes #4278
+feat(feature-a-lib): allow configuring Popper via popperOptions API (#4323) (a6f6803)
+feat(util-a-lib): add horizontal collapse (98f0527)
+fix(util-a-lib): add offset to match Bootstrap #4297 (9f2fe0d)
+fix(util-a-lib): disable host button of disabled dropdown item (4f71568), closes #4301
+fix(util-a-lib): ensure popup is shown above modal (0a41501)
+fix(util-a-lib): set tabIndex to -1 on disabled dropdown items (1ab5d21), closes #4301
+fix(feature-b-lib): remove visual 'twitch' when closing (#4295) (15246f2), closes #4293
+feat(feature-b-lib): allow overriding tabindex with provided value (#4309) (9d80e66)
+feat(util-a-lib): allow specifying target for tooltip (dc82372)
+fix(util-a-lib): changing [max] doesn't update displayed number of stars (9b49136), closes #4132
+fix(feature-b-lib): add offset to match Bootstrap (7f636ed)
+fix(feature-b-lib): ensure popup is shown above modal (d10df5d)
