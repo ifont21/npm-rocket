@@ -2,11 +2,9 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/google/go-github/v52/github"
-	"github.com/ifont21/pre-releaser-cli/internal/files"
 	"golang.org/x/oauth2"
 )
 
@@ -36,7 +34,7 @@ func (g *GithubRepositoryImpl) ListRepositories() ([]string, error) {
 }
 
 func (g *GithubRepositoryImpl) CreatePR(filePath string) error {
-	ctx := context.Background()
+	/* ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")})
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
@@ -59,7 +57,7 @@ func (g *GithubRepositoryImpl) CreatePR(filePath string) error {
 		fmt.Println("Error creating PR", err)
 		return err
 	}
-	fmt.Println("PR created", pr)
+	fmt.Println("PR created", pr) */
 
 	return nil
 }
