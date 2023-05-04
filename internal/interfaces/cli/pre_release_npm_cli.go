@@ -2,7 +2,7 @@
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 
 */
-package cmd
+package cli
 
 import (
 	"os"
@@ -16,8 +16,8 @@ var libs string
 var commits string
 
 // bumpPackagesCmd represents the bumpPackages command
-var bumpPackagesCmd = &cobra.Command{
-	Use:   "bumpPackages",
+var bumpNPMPackages = &cobra.Command{
+	Use:   "bump-npm-packages",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -37,11 +37,11 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	bumpPackagesCmd.Flags().StringVarP(&repoPath, "repoPath", "r", "", "base path to the libraries")
-	bumpPackagesCmd.Flags().StringVarP(&libs, "libs", "l", "None", "libs to bump separated by comma")
-	bumpPackagesCmd.Flags().StringVarP(&commits, "commits", "c", "None", "commits to update the CHANGELOG.md file")
+	bumpNPMPackages.Flags().StringVarP(&repoPath, "local-repo", "r", "", "base path to the libraries")
+	bumpNPMPackages.Flags().StringVarP(&libs, "packages", "p", "None", "libs to bump separated by comma")
+	bumpNPMPackages.Flags().StringVarP(&commits, "commits", "c", "None", "commits to update the CHANGELOG.md file")
 
-	rootCmd.AddCommand(bumpPackagesCmd)
+	rootCmd.AddCommand(bumpNPMPackages)
 
 	// Here you will define your flags and configuration settings.
 
