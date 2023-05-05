@@ -35,8 +35,8 @@ func (g GPTSuggestions) GetSuggestedChangelogOutOfCommits(commits string) (strin
 		-
 		### Deprecated
 		-`,
-		"Now whenever you see the word `None` don't include the section",
 		"Now add the commit messages in a markdown table with columns `commit message` and `description`. Add tables as many sections listed",
+		"Now whenever you see the word `None` don't include the section",
 	}
 	chatMessages := make([]openai.ChatCompletionMessage, 0)
 	finalResponse := ""

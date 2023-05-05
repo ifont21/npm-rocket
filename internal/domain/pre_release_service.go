@@ -1,6 +1,8 @@
 package domain
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type PreReleaseService struct {
 	commitService            CommitsService
@@ -37,10 +39,46 @@ func (p PreReleaseService) PreReleasePackages() error {
 	}
 	fmt.Println("Commit messages: ", commitMessages)
 
+	var processedPackage = make(chan string, len(affectedLibs))
+
 	for _, lib := range affectedLibs {
-		/*
-		* 1. get the commits by scope.
-		 */
+		go func(lib Package) {
+			commitsByScope, err := p.commitService.FilterCommitMessageByScope(commitMessages, lib.Name)
+			if err != nil {
+				processedPackage <- fmt.Sprintf("Channel: Error getting commits by scope `%s`\n", lib.Name)
+				return
+			}
+			if commitsByScope == "" {
+				processedPackage <- fmt.Sprintf("Channel: No commits for the scope `%s`\n", lib.Name)
+				return
+			}
+
+			newVersion, err := p.bumpPackageJSONService.BumpPackageByCommits(commitsByScope, fmt.Sprintf("libs/%s/package.json", lib.Path))
+			if err != nil {
+				processedPackage <- fmt.Sprintf("Channel: Error bumping package.json `%s`\n", lib.Name)
+				return
+			}
+
+			generatedChangelog, err := p.generateChangelogService.GenerateByCommits(commitsByScope, newVersion)
+			if err != nil {
+				processedPackage <- fmt.Sprintf("Channel: Error generating the CHANGELOG for `%s`\n", lib.Name)
+				return
+			}
+
+			err = p.fileRepository.UpdateTopOfTheFileContent(generatedChangelog, fmt.Sprintf("libs/%s/CHANGELOG.md", lib.Path))
+			if err != nil {
+				processedPackage <- fmt.Sprintf("Channel: Error Updating the CHANGELOG for `%s`\n", lib.Name)
+				return
+			}
+			processedPackage <- fmt.Sprintf("New version generated for `%s`: ****************************************\n%s\n", lib.Name, generatedChangelog)
+		}(lib)
+	}
+
+	for i := 0; i < len(affectedLibs); i++ {
+		fmt.Println(<-processedPackage)
+	}
+
+	/* for _, lib := range affectedLibs {
 		commitsByScope, err := p.commitService.FilterCommitMessageByScope(commitMessages, lib.Name)
 		if err != nil {
 			fmt.Println("Error getting commits by scope", err)
@@ -53,18 +91,12 @@ func (p PreReleaseService) PreReleasePackages() error {
 
 		fmt.Printf("Text selected by the scope `%s`\n%s", lib, commitsByScope)
 
-		/*
-		* 2. bump package.json (libs/<lib>/package.json) by commits. (major, minor, patch) and return the new version.
-		 */
 		newVersion, err := p.bumpPackageJSONService.BumpPackageByCommits(commitsByScope, fmt.Sprintf("libs/%s/package.json", lib.Path))
 		if err != nil {
 			fmt.Println("Error bumping package.json", err)
 			return err
 		}
 
-		/*
-		* 3. generate changelog out of the commit message and update it in the file system (libs/<lib>/CHANGELOG.md) with the new version.
-		 */
 		generatedChangelog, err := p.generateChangelogService.GenerateByCommits(commitsByScope, newVersion)
 		if err != nil {
 			fmt.Println("Error generating changelog", err)
@@ -78,7 +110,7 @@ func (p PreReleaseService) PreReleasePackages() error {
 			return err
 		}
 
-	}
+	} */
 
 	return nil
 }
