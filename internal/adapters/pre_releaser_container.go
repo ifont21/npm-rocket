@@ -5,7 +5,7 @@ import (
 	"github.com/ifont21/pre-releaser-cli/internal/stubs"
 )
 
-func NewPreReleaserContainer(basePath string, openAIToken string) domain.PreReleaseService {
+func NewPreReleaserContainer(basePath string, openAIToken string, preRelease bool) domain.PreReleaseService {
 	// Repositories
 	fileRepository := NewFileRepository(basePath)
 	// gitCommitsRepository := NewGitCommits(basePath)
@@ -16,7 +16,12 @@ func NewPreReleaserContainer(basePath string, openAIToken string) domain.PreRele
 	config := NewConfig(fileRepository)
 	// Services
 	commitService := domain.NewCommitsService(suggestions, gitCommitsRepository, config)
-	bumpPackageJSONService := domain.NewBumpPackageJSONService(bumpPackageJSON, fileRepository, suggestions)
+	bumpPackageJSONService := domain.NewBumpPackageJSONService(bumpPackageJSON,
+		fileRepository,
+		suggestions,
+		config,
+		preRelease,
+	)
 	generateChangelogService := domain.NewGenerateChangelogService(suggestions)
 
 	return domain.NewPreReleaseService(commitService, bumpPackageJSONService, generateChangelogService, fileRepository)

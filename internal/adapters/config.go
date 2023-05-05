@@ -10,12 +10,17 @@ type Package struct {
 	Path string `yaml:"path"`
 }
 
+type PreRelease struct {
+	ID string `yaml:"id"`
+}
+
 type PreReleaserYaml struct {
 	Repository struct {
 		Owner string `yaml:"owner"`
 		Name  string `yaml:"name"`
 	} `yaml:"repository"`
-	Libs []Package `yaml:"libs"`
+	PreRelease PreRelease `yaml:"pre-release"`
+	Libs       []Package  `yaml:"libs"`
 }
 
 func castDomainPackage(yamlPackages []Package) []domain.Package {
@@ -51,4 +56,18 @@ func (c Config) GetConfiguredLibraries() ([]domain.Package, error) {
 	}
 
 	return castDomainPackage(preReleaseConfig.Libs), nil
+}
+
+func (c Config) GetPreReleaseID() (string, error) {
+	var preReleaseConfig PreReleaserYaml
+	config, err := c.fileRepository.GetPlainFileContent("pre-releaser.yaml")
+	if err != nil {
+		return "", err
+	}
+	err = yaml.Unmarshal(config, &preReleaseConfig)
+	if err != nil {
+		return "", err
+	}
+
+	return preReleaseConfig.PreRelease.ID, nil
 }

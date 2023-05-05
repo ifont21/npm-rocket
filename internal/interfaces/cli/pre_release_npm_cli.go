@@ -12,8 +12,7 @@ import (
 )
 
 var repoPath string
-var libs string
-var commits string
+var preRelease bool
 
 // bumpPackagesCmd represents the bumpPackages command
 var bumpNPMPackages = &cobra.Command{
@@ -26,20 +25,22 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		dirPath, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
 		if repoPath == "" {
-			repoPath = "."
+			repoPath = dirPath
 		}
 
-		preReleaseService := adapters.NewPreReleaserContainer(repoPath, os.Getenv("OPENAI_TOKEN"))
+		preReleaseService := adapters.NewPreReleaserContainer(repoPath, os.Getenv("OPENAI_TOKEN"), preRelease)
 		preReleaseService.PreReleasePackages()
-
 	},
 }
 
 func init() {
-	bumpNPMPackages.Flags().StringVarP(&repoPath, "local-repo", "r", "", "base path to the libraries")
-	bumpNPMPackages.Flags().StringVarP(&libs, "packages", "p", "None", "libs to bump separated by comma")
-	bumpNPMPackages.Flags().StringVarP(&commits, "commits", "c", "None", "commits to update the CHANGELOG.md file")
+	bumpNPMPackages.Flags().StringVarP(&repoPath, "local-repo", "r", "", "where the repo is located")
+	bumpNPMPackages.Flags().BoolVarP(&preRelease, "pre-release", "p", false, "Whether to pre-release or not")
 
 	rootCmd.AddCommand(bumpNPMPackages)
 
