@@ -8,4 +8,6 @@ type Package struct {
 type ConfigRepository interface {
 	GetConfiguredLibraries() ([]Package, error)
 	GetPreReleaseID() (string, error)
+	GetBasedBranch() (string, error)
+	GetDryRunCommitsFilePath() (string, error)
 }

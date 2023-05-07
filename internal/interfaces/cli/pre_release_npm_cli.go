@@ -13,17 +13,22 @@ import (
 
 var repoPath string
 var preRelease bool
+var dryRun bool
 
 // bumpPackagesCmd represents the bumpPackages command
-var bumpNPMPackages = &cobra.Command{
-	Use:   "bump-npm-packages",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+var prepareNPMPackagesRelease = &cobra.Command{
+	Use:   "prep-npm-releases",
+	Short: "Prepare releases for npm packages",
+	Long: `Read the local repo branch to find the packages that need to be released out of the commit messages.:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	1. Read the local repo branch to find the pre-releaser.yaml file and set up the configuration.
+	2. Read the local repo branch to find the packages that need to be released out of the commit messages.
+	3. Filter out commit messages that are not related to the packages that need to be released.
+	4. Leveraging openai to bump the next version whether is a normal release or a pre-release.
+	5. Leveraging openai to generate the changelog out of the commit messages. 
+	
+	Example:
+	$ pkgctl prep-npm-releases -p`,
 	Run: func(cmd *cobra.Command, args []string) {
 		dirPath, err := os.Getwd()
 		if err != nil {
@@ -33,16 +38,17 @@ to quickly create a Cobra application.`,
 			repoPath = dirPath
 		}
 
-		preReleaseService := adapters.NewPreReleaserContainer(repoPath, os.Getenv("OPENAI_TOKEN"), preRelease)
+		preReleaseService := adapters.NewPreReleaserContainer(repoPath, os.Getenv("OPENAI_TOKEN"), preRelease, dryRun)
 		preReleaseService.PreReleasePackages()
 	},
 }
 
 func init() {
-	bumpNPMPackages.Flags().StringVarP(&repoPath, "local-repo", "r", "", "where the repo is located")
-	bumpNPMPackages.Flags().BoolVarP(&preRelease, "pre-release", "p", false, "Whether to pre-release or not")
+	prepareNPMPackagesRelease.Flags().StringVarP(&repoPath, "local-repo", "r", "", "where the repo is located")
+	prepareNPMPackagesRelease.Flags().BoolVarP(&preRelease, "pre-release", "p", false, "Whether to pre-release or not")
+	prepareNPMPackagesRelease.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Whether to dry run or not")
 
-	rootCmd.AddCommand(bumpNPMPackages)
+	rootCmd.AddCommand(prepareNPMPackagesRelease)
 
 	// Here you will define your flags and configuration settings.
 

@@ -14,11 +14,17 @@ type PreRelease struct {
 	ID string `yaml:"id"`
 }
 
+type Commits struct {
+	TestFile string `yaml:"test-file"`
+}
+
 type PreReleaserYaml struct {
 	Repository struct {
-		Owner string `yaml:"owner"`
-		Name  string `yaml:"name"`
+		Owner  string `yaml:"owner"`
+		Name   string `yaml:"name"`
+		Branch string `yaml:"branch"`
 	} `yaml:"repository"`
+	Commits    Commits    `yaml:"commits"`
 	PreRelease PreRelease `yaml:"pre-release"`
 	Libs       []Package  `yaml:"libs"`
 }
@@ -38,15 +44,15 @@ type Config struct {
 	fileRepository FileRepository
 }
 
-func NewConfig(fileRepository FileRepository) *Config {
-	return &Config{
+func NewConfig(fileRepository FileRepository) Config {
+	return Config{
 		fileRepository: fileRepository,
 	}
 }
 
 func (c Config) GetConfiguredLibraries() ([]domain.Package, error) {
 	var preReleaseConfig PreReleaserYaml
-	config, err := c.fileRepository.GetPlainFileContent("pre-releaser.yaml")
+	config, err := c.fileRepository.GetPlainFileContent("releaser.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +66,7 @@ func (c Config) GetConfiguredLibraries() ([]domain.Package, error) {
 
 func (c Config) GetPreReleaseID() (string, error) {
 	var preReleaseConfig PreReleaserYaml
-	config, err := c.fileRepository.GetPlainFileContent("pre-releaser.yaml")
+	config, err := c.fileRepository.GetPlainFileContent("releaser.yaml")
 	if err != nil {
 		return "", err
 	}
@@ -70,4 +76,32 @@ func (c Config) GetPreReleaseID() (string, error) {
 	}
 
 	return preReleaseConfig.PreRelease.ID, nil
+}
+
+func (c Config) GetBasedBranch() (string, error) {
+	var preReleaseConfig PreReleaserYaml
+	config, err := c.fileRepository.GetPlainFileContent("releaser.yaml")
+	if err != nil {
+		return "", err
+	}
+	err = yaml.Unmarshal(config, &preReleaseConfig)
+	if err != nil {
+		return "", err
+	}
+
+	return preReleaseConfig.Repository.Branch, nil
+}
+
+func (c Config) GetDryRunCommitsFilePath() (string, error) {
+	var preReleaseConfig PreReleaserYaml
+	config, err := c.fileRepository.GetPlainFileContent("releaser.yaml")
+	if err != nil {
+		return "", err
+	}
+	err = yaml.Unmarshal(config, &preReleaseConfig)
+	if err != nil {
+		return "", err
+	}
+
+	return preReleaseConfig.Commits.TestFile, nil
 }

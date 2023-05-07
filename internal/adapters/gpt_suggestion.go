@@ -3,6 +3,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/sashabaranov/go-openai"
 )
@@ -51,7 +52,11 @@ func (g GPTSuggestions) GetSuggestedChangelogOutOfCommits(commits string) (strin
 			Messages:    chatMessages,
 		})
 		if err != nil {
-			fmt.Printf("Completion Error: %v", err)
+			if strings.Contains(err.Error(), "401") {
+				fmt.Printf("Error trying to generate the changelog, please check your openai token\n")
+			} else {
+				fmt.Printf("Completion Error: %v", err.Error())
+			}
 			break
 		}
 		finalResponse = response.Choices[0].Message.Content
@@ -83,7 +88,11 @@ func (g GPTSuggestions) GetBumpTypeSuggestionOutOfCommits(commits string) (strin
 
 	response, err := c.CreateChatCompletion(ctx, req)
 	if err != nil {
-		fmt.Printf("Completion Error: %v", err)
+		if strings.Contains(err.Error(), "401") {
+			fmt.Printf("Error trying to suggest the bump type, please check your openai token\n")
+		} else {
+			fmt.Printf("Completion Error: %v", err)
+		}
 		return "", err
 	}
 
@@ -109,7 +118,11 @@ func (g GPTSuggestions) GetFilteredCommitsByScope(commits string, scope string) 
 
 	response, err := c.CreateChatCompletion(ctx, req)
 	if err != nil {
-		fmt.Printf("Completion Error: %v", err)
+		if strings.Contains(err.Error(), "401") {
+			fmt.Printf("Error trying to filter the commits, please check your openai token\n")
+		} else {
+			fmt.Printf("Completion Error: %v", err)
+		}
 		return "", err
 	}
 

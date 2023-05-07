@@ -27,7 +27,7 @@ func (p PrepareReleaseService) PreReleasePackages() error {
 	}
 	fmt.Println("Affected libs: ", affectedLibs)
 
-	commitMessages, err := p.commitService.GetCommitMessagesByDate("", "main")
+	commitMessages, err := p.commitService.GetCommitMessagesByDate("")
 	if err != nil {
 		fmt.Println("Error getting commitMessages", err)
 		return err

@@ -34,8 +34,13 @@ func (c CommitsService) FilterCommitMessageByScope(commits string, scope string)
 	return commits, nil
 }
 
-func (c CommitsService) GetCommitMessagesByDate(since string, branch string) (string, error) {
-	commits, err := c.gitCommitRepository.GetCommitMessagesByDate(since, branch)
+func (c CommitsService) GetCommitMessagesByDate(since string) (string, error) {
+	baseBranch, err := c.config.GetBasedBranch()
+	if err != nil {
+		return "", err
+	}
+
+	commits, err := c.gitCommitRepository.GetCommitMessagesByDate(since, baseBranch)
 	if err != nil {
 		return "", err
 	}

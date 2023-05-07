@@ -17,7 +17,7 @@ func (g *GitCommitsStub) GetCommitMessagesByDate(since string, branch string) (s
 		return "", err
 	}
 
-	content, err := os.ReadFile(filepath.Join(currentDir, "/resources/commits.txt"))
+	content, err := os.ReadFile(filepath.Join(currentDir, "resources", "commits.txt"))
 	if err != nil {
 		return "", err
 	}
