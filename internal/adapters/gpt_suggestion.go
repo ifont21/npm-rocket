@@ -48,7 +48,7 @@ func (g GPTSuggestions) GetSuggestedChangelogOutOfCommits(commits string) (strin
 		})
 		response, err := c.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
 			Model:       openai.GPT3Dot5Turbo,
-			Temperature: 0.2,
+			Temperature: 0.7,
 			Messages:    chatMessages,
 		})
 		if err != nil {

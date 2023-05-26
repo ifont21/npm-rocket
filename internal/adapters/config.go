@@ -15,15 +15,17 @@ type PreRelease struct {
 }
 
 type Commits struct {
-	TestFile string `yaml:"test-file"`
+	TestFile string `yaml:"use-file"`
+}
+
+type Repository struct {
+	Owner  string `yaml:"owner"`
+	Name   string `yaml:"name"`
+	Branch string `yaml:"branch"`
 }
 
 type PreReleaserYaml struct {
-	Repository struct {
-		Owner  string `yaml:"owner"`
-		Name   string `yaml:"name"`
-		Branch string `yaml:"branch"`
-	} `yaml:"repository"`
+	Repository Repository `yaml:"repository"`
 	Commits    Commits    `yaml:"commits"`
 	PreRelease PreRelease `yaml:"pre-release"`
 	Libs       []Package  `yaml:"libs"`
@@ -38,6 +40,14 @@ func castDomainPackage(yamlPackages []Package) []domain.Package {
 		})
 	}
 	return domainPackages
+}
+
+func castDomainRepository(yamlRepository Repository) domain.Repository {
+	return domain.Repository{
+		Owner:  yamlRepository.Owner,
+		Name:   yamlRepository.Name,
+		Branch: yamlRepository.Branch,
+	}
 }
 
 type Config struct {
@@ -104,4 +114,18 @@ func (c Config) GetDryRunCommitsFilePath() (string, error) {
 	}
 
 	return preReleaseConfig.Commits.TestFile, nil
+}
+
+func (c Config) GetRepositoryConfig() (domain.Repository, error) {
+	var preReleaseConfig PreReleaserYaml
+	config, err := c.fileRepository.GetPlainFileContent("releaser.yaml")
+	if err != nil {
+		return domain.Repository{}, err
+	}
+	err = yaml.Unmarshal(config, &preReleaseConfig)
+	if err != nil {
+		return domain.Repository{}, err
+	}
+
+	return castDomainRepository(preReleaseConfig.Repository), nil
 }

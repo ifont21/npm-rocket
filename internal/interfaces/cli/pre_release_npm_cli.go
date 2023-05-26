@@ -6,6 +6,7 @@ package cli
 
 import (
 	"os"
+	"time"
 
 	"github.com/ifont21/pre-releaser-cli/internal/adapters"
 	"github.com/spf13/cobra"
@@ -14,10 +15,11 @@ import (
 var repoPath string
 var preRelease bool
 var dryRun bool
+var noCommit bool
 
 // bumpPackagesCmd represents the bumpPackages command
 var prepareNPMPackagesRelease = &cobra.Command{
-	Use:   "prep-npm-releases",
+	Use:   "prepare-release",
 	Short: "Prepare releases for npm packages",
 	Long: `Read the local repo branch to find the packages that need to be released out of the commit messages.:
 
@@ -28,7 +30,7 @@ var prepareNPMPackagesRelease = &cobra.Command{
 	5. Leveraging openai to generate the changelog out of the commit messages. 
 	
 	Example:
-	$ pkgctl prep-npm-releases -p`,
+	$ pkgctl prepare-release -p`,
 	Run: func(cmd *cobra.Command, args []string) {
 		dirPath, err := os.Getwd()
 		if err != nil {
@@ -39,14 +41,18 @@ var prepareNPMPackagesRelease = &cobra.Command{
 		}
 
 		preReleaseService := adapters.NewPreReleaserContainer(repoPath, os.Getenv("OPENAI_TOKEN"), preRelease, dryRun)
-		preReleaseService.PreReleasePackages()
+		start := time.Now()
+		preReleaseService.PreReleasePackages(preRelease, noCommit)
+		elapsed := time.Since(start)
+		cmd.Printf("Pre-release took %s", elapsed)
 	},
 }
 
 func init() {
 	prepareNPMPackagesRelease.Flags().StringVarP(&repoPath, "local-repo", "r", "", "where the repo is located")
 	prepareNPMPackagesRelease.Flags().BoolVarP(&preRelease, "pre-release", "p", false, "Whether to pre-release or not")
-	prepareNPMPackagesRelease.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Whether to dry run or not")
+	prepareNPMPackagesRelease.Flags().BoolVarP(&dryRun, "use-commit-file", "u", false, "Whether to dry run or not")
+	prepareNPMPackagesRelease.Flags().BoolVarP(&noCommit, "no-commit", "n", false, "Whether to commit or not")
 
 	rootCmd.AddCommand(prepareNPMPackagesRelease)
 
