@@ -19,7 +19,7 @@ var noCommit bool
 
 // bumpPackagesCmd represents the bumpPackages command
 var prepareNPMPackagesRelease = &cobra.Command{
-	Use:   "prepare-release",
+	Use:   "changelog-bumper",
 	Short: "Prepare releases for npm packages",
 	Long: `Read the local repo branch to find the packages that need to be released out of the commit messages.:
 
@@ -30,7 +30,7 @@ var prepareNPMPackagesRelease = &cobra.Command{
 	5. Leveraging openai to generate the changelog out of the commit messages. 
 	
 	Example:
-	$ pkgctl prepare-release -p`,
+	$ npm-rocket changelog-bumper -p`,
 	Run: func(cmd *cobra.Command, args []string) {
 		dirPath, err := os.Getwd()
 		if err != nil {
