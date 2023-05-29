@@ -16,15 +16,22 @@ func NewGenerateChangelogService(actionSuggestions ActionSuggestions) GenerateCh
 }
 
 func (g GenerateChangelogService) GenerateByCommits(commits string, newVersion string) (string, error) {
-	suggestedText, err := g.ActionSuggestions.GetSuggestedChangelogOutOfCommits(commits)
+	changelogGenerated, err := g.ActionSuggestions.GetSuggestedChangelogOutOfCommits(commits)
 	if err != nil {
 		return "", err
 	}
-	changelogGenerated := fmt.Sprintf("## %s\n\n%s", newVersion, suggestedText)
 
-	if strings.Contains(changelogGenerated, "Ignoring") {
-		changelogGenerated = ""
+	beginIndex := strings.Index(changelogGenerated, "- begin")
+	endIndex := strings.Index(changelogGenerated, "- end")
+	if beginIndex == -1 || endIndex == -1 {
+		return "", fmt.Errorf("could not find begin or end in the generated changelog")
 	}
+	changelogGenerated = changelogGenerated[beginIndex:endIndex]
+	changelogGenerated = strings.ReplaceAll(changelogGenerated, "- begin", "")
+	changelogGenerated = strings.ReplaceAll(changelogGenerated, "- end", "")
+	changelogGenerated = strings.TrimSpace(changelogGenerated)
+
+	changelogGenerated = fmt.Sprintf("## %s\n\n%s", newVersion, changelogGenerated)
 
 	return changelogGenerated, nil
 }

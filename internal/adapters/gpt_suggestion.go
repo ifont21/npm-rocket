@@ -2,8 +2,10 @@ package adapters
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/sashabaranov/go-openai"
 )
@@ -20,23 +22,27 @@ func NewGPTSuggestion(openAIToken string) *GPTSuggestions {
 
 func (g GPTSuggestions) GetSuggestedChangelogOutOfCommits(commits string) (string, error) {
 	c := openai.NewClient(g.OpenAIToken)
-	commit := fmt.Sprintf("commit message:\n%s\n", commits)
-	mainPrompt := "can you generate a changelog based on these commits:"
-	mainRequest := fmt.Sprintf("%s\n%s", mainPrompt, commit)
+	commitMessages := fmt.Sprintf("commit message:\n%s\n", commits)
+	prompt := fmt.Sprintf(`I am working on a new version of an NPM library and need to create a CHANGELOG based on specific commit messages. 
+	The changelog needs to be categorized into sections like Breaking Changes, Bug fixes, Features, Deprecated, and Refactor. 
+	Please DO NOT include categories if there are no relevant commit messages.
+	Here are the commit messages:
+    %s
+	the change log should follow the following format:
+	
+	- begin
+
+	### Category
+
+	| description                           | Commit Number |
+	| ---------------------------------------- | ------------- |
+	| [commit-message] | #124 |
+
+	- end
+	`, commitMessages)
+
 	messages := []string{
-		mainRequest,
-		`Can you consider now using this template for the changelog
-		### Breaking changes
-		-
-		### Added
-		-
-		### Bug fixes
-		-
-		### Refactored
-		-
-		### Deprecated
-		-`,
-		"Now add the commit messages in a markdown table with columns `commit message` and `description`. Add tables as many sections listed an whenever you see the word `None` don't include the section",
+		prompt,
 	}
 	chatMessages := make([]openai.ChatCompletionMessage, 0)
 	finalResponse := ""
@@ -48,9 +54,10 @@ func (g GPTSuggestions) GetSuggestedChangelogOutOfCommits(commits string) (strin
 		})
 		response, err := c.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
 			Model:       openai.GPT3Dot5Turbo,
-			Temperature: 0.7,
+			Temperature: 0.4,
 			Messages:    chatMessages,
 		})
+
 		if err != nil {
 			if strings.Contains(err.Error(), "401") {
 				fmt.Printf("Error trying to generate the changelog, please check your openai token\n")
@@ -60,8 +67,8 @@ func (g GPTSuggestions) GetSuggestedChangelogOutOfCommits(commits string) (strin
 			break
 		}
 		finalResponse = response.Choices[0].Message.Content
-		fmt.Printf("Changelog response ************************* \n%s\n", finalResponse)
 	}
+	/* fmt.Printf("Changelog response ************************* \n%s\n", finalResponse) */
 
 	return finalResponse, nil
 }
@@ -87,13 +94,22 @@ func (g GPTSuggestions) GetBumpTypeSuggestionOutOfCommits(commits string) (strin
 	}
 
 	response, err := c.CreateChatCompletion(ctx, req)
-	if err != nil {
-		if strings.Contains(err.Error(), "401") {
-			fmt.Printf("Error trying to suggest the bump type, please check your openai token\n")
-		} else {
-			fmt.Printf("Completion Error: %v", err)
+
+	e := &openai.APIError{}
+	if errors.As(err, &e) {
+		switch e.StatusCode {
+		case 401:
+			return "", errors.New("invalid auth token or key")
+		case 500:
+			return "", errors.New("internal server error")
+		case 429:
+			fmt.Println("Too many request, trying again in 2 seconds ...")
+			time.Sleep(2 * time.Second)
+			response, err = c.CreateChatCompletion(ctx, req)
+			if err != nil {
+				return "", err
+			}
 		}
-		return "", err
 	}
 
 	prediction := response.Choices[0].Message.Content

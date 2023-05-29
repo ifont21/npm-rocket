@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -49,24 +50,33 @@ func (p PrepareReleaseService) PreReleasePackages(isPreRelease bool, noCommit bo
 		fmt.Println("Error getting listAffected", err)
 		return err
 	}
-	fmt.Println("Affected libs: ", affectedLibs)
 
 	commitMessages, err := p.commitService.GetCommitMessagesByDate("")
 	if err != nil {
 		fmt.Println("Error getting commitMessages", err)
 		return err
 	}
-	fmt.Println("Commit messages: ", commitMessages)
 
-	var processedPackage = make(chan string, len(affectedLibs))
+	var bumpedResult = make(chan PreChangelog, len(affectedLibs))
+	var wg sync.WaitGroup
+	wg.Add(len(affectedLibs))
 
 	for _, lib := range affectedLibs {
-		go p.prepareReleasePackage.PreparePackage(commitMessages, lib, processedPackage)
+		go p.prepareReleasePackage.BumpPackage(commitMessages, lib, &wg, bumpedResult)
 	}
 
-	for i := 0; i < len(affectedLibs); i++ {
-		fmt.Println(<-processedPackage)
+	wg.Wait()
+	close(bumpedResult)
+
+	var postChangelog = make(chan string, len(bumpedResult))
+	wg.Add(len(bumpedResult))
+
+	for preChangelog := range bumpedResult {
+		go p.prepareReleasePackage.GenerateChangelogForPackage(preChangelog, &wg, postChangelog)
 	}
+
+	wg.Wait()
+	close(postChangelog)
 
 	releaseBranchName := getReleaseBranchName(isPreRelease)
 
